@@ -1,6 +1,8 @@
 import tarfile
 import sys
 import arxiv
+from numpy import loadtxt
+
 
 url = sys.argv[1]
 
@@ -16,10 +18,27 @@ paper.download_source(filename="cur_download.tar.gz")
 tar = tarfile.open("cur_download.tar.gz", "r:gz")
 contents = []
 for member in tar.getmembers():
-     f = tar.extractfile(member)
-     if f is not None and member.name.endswith(".tex"):
-         content = f.read()
-         contents.append(content)
+    f = tar.extractfile(member)
+    if f is not None and member.name.endswith(".tex"):
+        #breakpoint()
+        content = f.readlines()
+        content = [c.decode("utf-8").strip() for c in content]
 
-print(contents)
-#TODO: actually search the contents for comments!
+        contents.extend([c for c in content if c.startswith("%")])
+
+
+######### bad word identification ##################
+f = open('badwords.txt', 'r+')
+badwords = [line for line in f.readlines()]
+f.close()
+
+output = []
+for line in contents:
+    for bad in badwords:
+        if bad in line:
+            output.append(line)
+
+if len(output) == 0: print("no bad words hidden in this paper")
+
+for o in output: print(o)
+######### end bad word search #################
